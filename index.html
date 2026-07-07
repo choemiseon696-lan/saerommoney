@@ -543,39 +543,58 @@
   </div>
 
   <script>
+    // ===== 호경대부 보안 전송 설정 =====
+    // Apps Script의 SECRET_KEY와 반드시 동일해야 합니다.
     const SECRET = "dream_2026_lock";
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxb58C7vGfaV_Q0yTGinWp7u6e0dmGT5ytflPz7D_5rfVyGaWhCeP3sFGvNFg8nD9mk7g/exec";
 
+    const ALLOW_AMOUNTS = [
+      "50만원 ~ 100만원",
+      "100만원 ~ 300만원",
+      "300만원 ~ 500만원",
+      "500만원 ~ 1000만원"
+    ];
+
+    const ALLOW_CONSULTS = [
+      "생활자금 상담",
+      "추가자금 상담",
+      "상품 안내 상담"
+    ];
+
     let isSubmitting = false;
+    let pageLoadedAt = Date.now();
 
     function openModal(id){
       const el = document.getElementById(id);
-      if(el){
-        el.classList.add('active');
-        document.body.style.overflow = 'hidden';
-      }
+      if(el){ el.classList.add('active'); document.body.style.overflow = 'hidden'; }
     }
-
     function closeModal(id){
       const el = document.getElementById(id);
-      if(el){
-        el.classList.remove('active');
-        document.body.style.overflow = '';
-      }
+      if(el){ el.classList.remove('active'); document.body.style.overflow = ''; }
     }
-
     function closeModalOnBg(event, id){
-      if(event.target && event.target.id === id){
-        closeModal(id);
-      }
+      if(event.target && event.target.id === id){ closeModal(id); }
     }
-
     document.addEventListener('keydown', function(e){
       if(e.key === 'Escape'){
         closeModal('privacyModal');
         closeModal('termsModal');
       }
     });
+
+    function safeLocalStorageGet(key, fallback){
+      try { return JSON.parse(localStorage.getItem(key) || fallback); }
+      catch(e){ return JSON.parse(fallback); }
+    }
+
+    function cleanText(v){
+      return String(v || "")
+        .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
+        .replace(/<[^>]*>/g, "")
+        .replace(/[<>]/g, "")
+        .replace(/javascript:/gi, "")
+        .trim();
+    }
 
     const phoneInput = document.getElementById("phone");
     if(phoneInput){
@@ -591,43 +610,41 @@
       });
     }
 
-    function safeLocalStorageGet(key, fallback){
-      try{
-        return JSON.parse(localStorage.getItem(key) || fallback);
-      }catch(e){
-        return JSON.parse(fallback);
-      }
-    }
-
     document.getElementById("applyForm").addEventListener("submit", function(e){
       e.preventDefault();
 
-      const name = document.getElementById("name").value.trim();
-      const phone = document.getElementById("phone").value.trim();
-      const amount = document.getElementById("amount").value;
-      const consult = document.getElementById("consult").value;
+      const name = cleanText(document.getElementById("name").value);
+      const phone = cleanText(document.getElementById("phone").value);
+      const amount = cleanText(document.getElementById("amount").value);
+      const consult = cleanText(document.getElementById("consult").value);
       const agree = document.getElementById("agree").checked;
       const submitBtn = document.getElementById("submitBtn");
-
       const cleanPhone = phone.replace(/[^0-9]/g, "");
 
       if(!agree){
         alert("개인정보 수집 및 이용에 동의해주세요.");
         return;
       }
-
       if(!/^[가-힣a-zA-Z\s]{2,15}$/.test(name)){
         alert("이름을 정확히 입력해주세요.");
         return;
       }
-
       if(!/^010[0-9]{8}$/.test(cleanPhone)){
         alert("연락처를 010-0000-0000 형식으로 입력해주세요.");
         return;
       }
+      if(!ALLOW_AMOUNTS.includes(amount)){
+        alert("필요 금액을 다시 선택해주세요.");
+        return;
+      }
+      if(!ALLOW_CONSULTS.includes(consult)){
+        alert("상담 구분을 다시 선택해주세요.");
+        return;
+      }
 
-      if(!amount || !consult){
-        alert("모든 항목을 선택해주세요.");
+      // 너무 빠른 자동 제출 방지: 페이지 진입 후 2초 이내 제출 차단
+      if(Date.now() - pageLoadedAt < 2000){
+        alert("잠시 후 다시 신청해주세요.");
         return;
       }
 
@@ -635,9 +652,15 @@
       const submitCounts = safeLocalStorageGet("hokyungSubmitCounts", "{}");
       const key = today + "_" + cleanPhone;
       const currentCount = submitCounts[key] || 0;
-
       if(currentCount >= 2){
         alert("이미 2회 접수된 번호입니다. 상담 연락을 기다려주세요.");
+        return;
+      }
+
+      // 같은 브라우저 30초 연속 신청 방지
+      const lastSubmitAt = Number(localStorage.getItem("hokyungLastSubmitAt") || "0");
+      if(Date.now() - lastSubmitAt < 30000){
+        alert("짧은 시간에 반복 접수할 수 없습니다. 잠시 후 다시 시도해주세요.");
         return;
       }
 
@@ -653,6 +676,7 @@
       const formData = new URLSearchParams();
       formData.append("secret", SECRET);
       formData.append("referer", location.href);
+      formData.append("pageHost", location.hostname);
       formData.append("name", name);
       formData.append("phone", phone);
       formData.append("amount", amount);
@@ -662,14 +686,13 @@
       formData.append("time", "");
       formData.append("loanDelay", "");
       formData.append("telDelay", "");
+      formData.append("loadedMs", String(Date.now() - pageLoadedAt));
 
       fetch(APPS_SCRIPT_URL, {
         method: "POST",
         body: formData
       })
-      .then(function(res){
-        return res.text();
-      })
+      .then(function(res){ return res.text(); })
       .then(function(result){
         if(result !== "success"){
           alert("접수가 제한되었습니다. 입력 정보를 다시 확인해주세요.");
@@ -678,6 +701,7 @@
 
         submitCounts[key] = currentCount + 1;
         localStorage.setItem("hokyungSubmitCounts", JSON.stringify(submitCounts));
+        localStorage.setItem("hokyungLastSubmitAt", String(Date.now()));
 
         if(typeof gtag === "function"){
           gtag('event', 'conversion', {
