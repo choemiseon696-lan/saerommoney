@@ -549,16 +549,27 @@
     let isSubmitting = false;
 
     function openModal(id){
-      var el = document.getElementById(id);
-      if(el){ el.classList.add('active'); document.body.style.overflow = 'hidden'; }
+      const el = document.getElementById(id);
+      if(el){
+        el.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
     }
+
     function closeModal(id){
-      var el = document.getElementById(id);
-      if(el){ el.classList.remove('active'); document.body.style.overflow = ''; }
+      const el = document.getElementById(id);
+      if(el){
+        el.classList.remove('active');
+        document.body.style.overflow = '';
+      }
     }
+
     function closeModalOnBg(event, id){
-      if(event.target && event.target.id === id){ closeModal(id); }
+      if(event.target && event.target.id === id){
+        closeModal(id);
+      }
     }
+
     document.addEventListener('keydown', function(e){
       if(e.key === 'Escape'){
         closeModal('privacyModal');
@@ -566,16 +577,27 @@
       }
     });
 
-    document.getElementById("phone").addEventListener("input", function(){
-      let value = this.value.replace(/[^0-9]/g, '');
-      if(value.length < 4){
-        this.value = value;
-      }else if(value.length < 8){
-        this.value = value.replace(/(\d{3})(\d+)/, "$1-$2");
-      }else{
-        this.value = value.replace(/(\d{3})(\d{4})(\d+)/, "$1-$2-$3");
+    const phoneInput = document.getElementById("phone");
+    if(phoneInput){
+      phoneInput.addEventListener("input", function(){
+        let value = this.value.replace(/[^0-9]/g, '').slice(0, 11);
+        if(value.length < 4){
+          this.value = value;
+        }else if(value.length < 8){
+          this.value = value.replace(/(\d{3})(\d+)/, "$1-$2");
+        }else{
+          this.value = value.replace(/(\d{3})(\d{4})(\d+)/, "$1-$2-$3");
+        }
+      });
+    }
+
+    function safeLocalStorageGet(key, fallback){
+      try{
+        return JSON.parse(localStorage.getItem(key) || fallback);
+      }catch(e){
+        return JSON.parse(fallback);
       }
-    });
+    }
 
     document.getElementById("applyForm").addEventListener("submit", function(e){
       e.preventDefault();
@@ -587,18 +609,30 @@
       const agree = document.getElementById("agree").checked;
       const submitBtn = document.getElementById("submitBtn");
 
+      const cleanPhone = phone.replace(/[^0-9]/g, "");
+
       if(!agree){
         alert("개인정보 수집 및 이용에 동의해주세요.");
         return;
       }
-      if(!name || !phone || !amount){
-        alert("모든 항목을 입력해주세요.");
+
+      if(!/^[가-힣a-zA-Z\s]{2,15}$/.test(name)){
+        alert("이름을 정확히 입력해주세요.");
         return;
       }
 
-      const cleanPhone = phone.replace(/[^0-9]/g, '');
+      if(!/^010[0-9]{8}$/.test(cleanPhone)){
+        alert("연락처를 010-0000-0000 형식으로 입력해주세요.");
+        return;
+      }
+
+      if(!amount || !consult){
+        alert("모든 항목을 선택해주세요.");
+        return;
+      }
+
       const today = new Date().toISOString().slice(0,10);
-      const submitCounts = JSON.parse(localStorage.getItem("hokyungSubmitCounts") || "{}");
+      const submitCounts = safeLocalStorageGet("hokyungSubmitCounts", "{}");
       const key = today + "_" + cleanPhone;
       const currentCount = submitCounts[key] || 0;
 
@@ -606,6 +640,7 @@
         alert("이미 2회 접수된 번호입니다. 상담 연락을 기다려주세요.");
         return;
       }
+
       if(isSubmitting){
         alert("이미 접수 처리 중입니다. 잠시만 기다려주세요.");
         return;
@@ -615,17 +650,32 @@
       submitBtn.disabled = true;
       submitBtn.innerText = "접수 중...";
 
-      const url =
-        APPS_SCRIPT_URL
-        + "?secret=" + encodeURIComponent(SECRET)
-        + "&referer=" + encodeURIComponent(location.href)
-        + "&name=" + encodeURIComponent(name)
-        + "&phone=" + encodeURIComponent(phone)
-        + "&amount=" + encodeURIComponent(amount)
-        + "&consult=" + encodeURIComponent(consult);
+      const formData = new URLSearchParams();
+      formData.append("secret", SECRET);
+      formData.append("referer", location.href);
+      formData.append("name", name);
+      formData.append("phone", phone);
+      formData.append("amount", amount);
+      formData.append("consult", consult);
+      formData.append("gender", "");
+      formData.append("birth", "");
+      formData.append("time", "");
+      formData.append("loanDelay", "");
+      formData.append("telDelay", "");
 
-      fetch(url, { method: "GET", mode: "no-cors" })
-      .then(function(){
+      fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        body: formData
+      })
+      .then(function(res){
+        return res.text();
+      })
+      .then(function(result){
+        if(result !== "success"){
+          alert("접수가 제한되었습니다. 입력 정보를 다시 확인해주세요.");
+          throw new Error(result);
+        }
+
         submitCounts[key] = currentCount + 1;
         localStorage.setItem("hokyungSubmitCounts", JSON.stringify(submitCounts));
 
@@ -640,13 +690,11 @@
         alert("접수완료. 상담사 배정 후 연락드리겠습니다.");
         document.getElementById("applyForm").reset();
         document.getElementById("agree").checked = true;
-
-        isSubmitting = false;
-        submitBtn.disabled = false;
-        submitBtn.innerText = "상담 신청하기";
       })
-      .catch(function(){
-        alert("접수 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      .catch(function(error){
+        console.log("submit error:", error);
+      })
+      .finally(function(){
         isSubmitting = false;
         submitBtn.disabled = false;
         submitBtn.innerText = "상담 신청하기";
