@@ -330,7 +330,7 @@
               <div class="loanMsgIcon">✓</div>
               <div class="loanMsgTxt">
                 <b>복잡한 서류 없는 간편 접수</b>
-                <p>이름과 번호만으로 신속한 접수 시스템</p>
+                <p>이름, 생년월일과 번호로 신속한 접수 시스템</p>
               </div>
             </div>
             <div class="loanMsgItem">
@@ -354,7 +354,7 @@
           <div class="card">
             <div class="cardIcon">01</div>
             <h3>간편 접수</h3>
-            <p>이름, 연락처, 필요금액만 입력하면 상담 신청이 접수됩니다.</p>
+            <p>이름, 생년월일, 연락처, 필요금액을 입력하면 상담 신청이 접수됩니다.</p>
           </div>
           <div class="card">
             <div class="cardIcon">02</div>
@@ -410,6 +410,10 @@
             <div class="field">
               <label for="name">이름</label>
               <input id="name" required placeholder="홍길동">
+            </div>
+            <div class="field">
+              <label for="birth">생년월일</label>
+              <input id="birth" required placeholder="810101" inputmode="numeric" maxlength="6" autocomplete="off">
             </div>
             <div class="field">
               <label for="phone">연락처</label>
@@ -494,7 +498,7 @@
       <div class="modalContent">호경대부는 상담 신청 및 안내를 위해 아래와 같은 개인정보를 수집·이용합니다.
 
 <b>1. 수집 항목</b>
-이름, 연락처, 필요금액 등
+이름, 생년월일, 연락처, 필요금액 등
 
 <b>2. 이용 목적</b>
 상담 신청 확인, 상담 안내, 고객 문의 응대
@@ -609,10 +613,18 @@
       });
     }
 
+    const birthInput = document.getElementById("birth");
+    if(birthInput){
+      birthInput.addEventListener("input", function(){
+        this.value = this.value.replace(/[^0-9]/g, "").slice(0, 6);
+      });
+    }
+
     document.getElementById("applyForm").addEventListener("submit", function(e){
       e.preventDefault();
 
       const name = cleanText(document.getElementById("name").value);
+      const birth = cleanText(document.getElementById("birth").value);
       const phone = cleanText(document.getElementById("phone").value);
       const amount = cleanText(document.getElementById("amount").value);
       const consult = cleanText(document.getElementById("consult").value);
@@ -626,6 +638,11 @@
       }
       if(!/^[가-힣a-zA-Z\s]{2,15}$/.test(name)){
         alert("이름을 정확히 입력해주세요.");
+        return;
+      }
+      if(!/^[0-9]{6}$/.test(birth)){
+        alert("생년월일은 6자리로 적어주세요. 예시 (810101)");
+        document.getElementById("birth").focus();
         return;
       }
       if(!/^010[0-9]{8}$/.test(cleanPhone)){
@@ -677,11 +694,11 @@
       formData.append("referer", location.href);
       formData.append("pageHost", location.hostname);
       formData.append("name", name);
+      formData.append("birth", birth);
       formData.append("phone", phone);
       formData.append("amount", amount);
       formData.append("consult", consult);
       formData.append("gender", "");
-      formData.append("birth", "");
       formData.append("time", "");
       formData.append("loanDelay", "");
       formData.append("telDelay", "");
