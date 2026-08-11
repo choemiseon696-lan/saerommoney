@@ -14,7 +14,7 @@
     gtag('config', 'AW-18126831450');
   </script>
 
-  <!-- Cloudflare Turnstile: Site Key는 공개키이며 Secret Key는 HTML에 넣지 않습니다. -->
+  
   <script>
     window.__hokyungTurnstileToken = "";
 
@@ -379,6 +379,79 @@
       </div>
     </section>
 
+<section class="formSec" id="apply">
+      <div class="wrap">
+        <h2 class="sectionTitle">상담 신청</h2>
+        <p class="sectionLead">아래 정보를 남겨주시면 확인 후 연락드리겠습니다.</p>
+
+        <form class="formBox" id="applyForm">
+          <div class="formGrid">
+            <div class="field">
+              <label for="name">이름</label>
+              <input id="name" required placeholder="홍길동">
+            </div>
+            <div class="field">
+              <label for="birth">생년월일</label>
+              <input id="birth" required placeholder="810101" inputmode="numeric" maxlength="6" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="phone">연락처</label>
+              <input id="phone" required placeholder="010-0000-0000" inputmode="numeric">
+            </div>
+            <div class="field">
+              <label for="amount">필요 금액</label>
+              <select id="amount" required>
+                <option value="">필요금액 선택</option>
+                <option>50만원 ~ 100만원</option>
+                <option>100만원 ~ 300만원</option>
+                <option>300만원 ~ 500만원</option>
+                <option>500만원 ~ 1000만원</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="consult">상담 구분</label>
+              <select id="consult" required>
+                <option>생활자금 상담</option>
+                <option>추가자금 상담</option>
+                <option>상품 안내 상담</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="agree">
+            <input type="checkbox" id="agree" required checked>
+            <label for="agree">개인정보 수집 및 이용에 동의합니다.</label><br>
+            <span style="font-size:12px;color:#94a3b8;display:inline-block;margin-top:4px;">※ 입력 정보는 상담 안내 및 접수를 위한 참고용입니다.</span>
+          </div>
+
+          <!-- 보안용 허니팟: 정상 사용자는 볼 수 없습니다. -->
+          <div class="hp-field" aria-hidden="true">
+            <label for="websiteField">웹사이트</label>
+            <input type="text" id="websiteField" tabindex="-1" autocomplete="off">
+          </div>
+
+          <!--
+            아래 data-sitekey 값 한 곳만 실제 Turnstile Site Key로 바꾸면 됩니다.
+            Turnstile Secret Key는 절대로 HTML에 넣지 마세요.
+          -->
+          <div class="turnstile-wrap">
+            <div
+              class="cf-turnstile"
+              data-sitekey="0x4AAAAAAEMvwyyZ2ihWmjg3"
+              data-action="lead_submit"
+              data-appearance="interaction-only"
+              data-callback="onTurnstileSuccess"
+              data-expired-callback="onTurnstileExpired"
+              data-error-callback="onTurnstileError">
+            </div>
+          </div>
+
+          <button class="submit" id="submitBtn" type="submit">상담 신청하기</button>
+        </form>
+      </div>
+    </section>
+
+
     <section id="service">
       <div class="wrap">
         <h2 class="sectionTitle">호경대부 상담 서비스</h2>
@@ -434,76 +507,7 @@
       </div>
     </section>
 
-    <section class="formSec" id="apply">
-      <div class="wrap">
-        <h2 class="sectionTitle">상담 신청</h2>
-        <p class="sectionLead">아래 정보를 남겨주시면 확인 후 연락드리겠습니다.</p>
-
-        <form class="formBox" id="applyForm">
-          <div class="formGrid">
-            <div class="field">
-              <label for="name">이름</label>
-              <input id="name" required placeholder="홍길동">
-            </div>
-            <div class="field">
-              <label for="birth">생년월일</label>
-              <input id="birth" required placeholder="810101" inputmode="numeric" maxlength="6" autocomplete="off">
-            </div>
-            <div class="field">
-              <label for="phone">연락처</label>
-              <input id="phone" required placeholder="010-0000-0000" inputmode="numeric">
-            </div>
-            <div class="field">
-              <label for="amount">필요 금액</label>
-              <select id="amount" required>
-                <option value="">필요금액 선택</option>
-                <option>50만원 ~ 100만원</option>
-                <option>100만원 ~ 300만원</option>
-                <option>300만원 ~ 500만원</option>
-                <option>500만원 ~ 1000만원</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="consult">상담 구분</label>
-              <select id="consult" required>
-                <option>생활자금 상담</option>
-                <option>추가자금 상담</option>
-                <option>상품 안내 상담</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="agree">
-            <input type="checkbox" id="agree" required checked>
-            <label for="agree">개인정보 수집 및 이용에 동의합니다.</label><br>
-            <span style="font-size:12px;color:#94a3b8;display:inline-block;margin-top:4px;">※ 입력 정보는 상담 안내 및 접수를 위한 참고용입니다.</span>
-          </div>
-
-
-          <div class="hp-field" aria-hidden="true">
-            <label for="websiteField">웹사이트</label>
-            <input type="text" id="websiteField" tabindex="-1" autocomplete="off">
-          </div>
-
-          
-
-          
-          <div class="turnstile-wrap">
-            <div
-              class="cf-turnstile"
-              data-sitekey="0x4AAAAAAEMvwyyZ2ihWmjg3"
-              data-action="lead_submit"
-              data-appearance="interaction-only"
-              data-callback="onTurnstileSuccess"
-              data-expired-callback="onTurnstileExpired"
-              data-error-callback="onTurnstileError">
-            </div>
-          </div>
-
-          <button class="submit" id="submitBtn" type="submit">상담 신청하기</button>
-        </form>
-      </div>
-    </section>
+    
   </main>
 
   <div class="notice">
@@ -602,9 +606,9 @@
 
   <script>
     // ============================================================
-    // 
-    // 
-    // 
+    // 호경대부 보안 전송 설정
+    // 브라우저에는 공개 가능한 Worker 주소만 둡니다.
+    // Apps Script URL / Telegram Token / Backend Secret은 HTML에 없습니다.
     // ============================================================
     const WORKER_URL = "https://dream-secure-gateway.choemiseon696.workers.dev";
 
