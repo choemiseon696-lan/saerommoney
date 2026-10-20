@@ -416,12 +416,27 @@
                 <option>상품 안내 상담</option>
               </select>
             </div>
+            <div class="field">
+              <label for="time">통화 가능한 시간대</label>
+              <select id="time" name="time" required>
+                <option value="">통화 가능한 시간대 선택</option>
+                <option value="09:00 ~ 10:00">09:00 ~ 10:00</option>
+                <option value="10:00 ~ 11:00">10:00 ~ 11:00</option>
+                <option value="11:00 ~ 12:00">11:00 ~ 12:00</option>
+                <option value="12:00 ~ 13:00">12:00 ~ 13:00</option>
+                <option value="13:00 ~ 14:00">13:00 ~ 14:00</option>
+                <option value="14:00 ~ 15:00">14:00 ~ 15:00</option>
+                <option value="15:00 ~ 16:00">15:00 ~ 16:00</option>
+                <option value="16:00 ~ 17:00">16:00 ~ 17:00</option>
+                <option value="17:00 ~ 18:00">17:00 ~ 18:00</option>
+              </select>
+            </div>
           </div>
 
           <div class="agree">
             <input type="checkbox" id="agree" required checked>
             <label for="agree">개인정보 수집 및 이용에 동의합니다.</label><br>
-            <span style="font-size:12px;color:#94a3b8;display:inline-block;margin-top:4px;">※ 입력 정보는 상담 안내 및 접수를 위한 참고용입니다.</span>
+            <span style="font-size:12px;color:#94a3b8;display:inline-block;margin-top:4px;">※ 남겨주신 정보는 상담 신청 확인과 원활한 상담 안내를 위해 사용됩니다.</span>
           </div>
 
           <!-- 보안용 허니팟: 정상 사용자는 볼 수 없습니다. -->
@@ -625,6 +640,18 @@
       "상품 안내 상담"
     ];
 
+    const ALLOW_TIMES = [
+      "09:00 ~ 10:00",
+      "10:00 ~ 11:00",
+      "11:00 ~ 12:00",
+      "12:00 ~ 13:00",
+      "13:00 ~ 14:00",
+      "14:00 ~ 15:00",
+      "15:00 ~ 16:00",
+      "16:00 ~ 17:00",
+      "17:00 ~ 18:00"
+    ];
+
     const BLOCKED_TEST_NAMES = [
       "test", "테스트", "tester", "admin", "nosecret",
       "wrongsecret", "emptysecret", "checktest", "null", "undefined"
@@ -792,6 +819,7 @@
       const phone = cleanText(document.getElementById("phone").value);
       const amount = cleanText(document.getElementById("amount").value);
       const consult = cleanText(document.getElementById("consult").value);
+      const time = cleanText(document.getElementById("time").value);
       const agree = document.getElementById("agree").checked;
       const submitBtn = document.getElementById("submitBtn");
       const websiteField = cleanText(
@@ -844,6 +872,12 @@
         return;
       }
 
+      if(!ALLOW_TIMES.includes(time)){
+        alert("통화 가능한 시간대를 선택해주세요.");
+        document.getElementById("time").focus();
+        return;
+      }
+
       // 단순 자동 제출 방지
       if(Date.now() - PAGE_LOADED_AT < 1500){
         alert("잠시 후 다시 신청해주세요.");
@@ -893,7 +927,7 @@
       formData.append("name", name);
       formData.append("birth", birth);
       formData.append("phone", cleanPhone);
-      formData.append("time", "");
+      formData.append("time", time);
       formData.append("loanDelay", "");
       formData.append("telDelay", "");
       formData.append("amount", amount);
