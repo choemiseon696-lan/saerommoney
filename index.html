@@ -626,6 +626,29 @@
     // Apps Script URL / Telegram Token / Backend Secret은 HTML에 없습니다.
     // ============================================================
     const WORKER_URL = "https://dream-secure-gateway.choemiseon696.workers.dev";
+// 상담 신청 한 건에만 붙일 유입경로입니다. 별도의 서버 요청이나 저장은 하지 않습니다.
+// 개인정보가 포함될 수 있는 전체 이전 URL 대신 외부 도메인만 사용합니다.
+function getLeadTrafficSource() {
+  const params = new URLSearchParams(window.location.search);
+  const safeTag = function(value) {
+    return String(value || "").replace(/[^a-zA-Z0-9가-힣_.-]/g, "").slice(0, 32);
+  };
+  const utmSource = safeTag(params.get("utm_source"));
+  const utmMedium = safeTag(params.get("utm_medium"));
+  if (utmSource) {
+    return "UTM:" + utmSource + (utmMedium ? "/" + utmMedium : "");
+  }
+  try {
+    const referer = new URL(document.referrer);
+    const host = referer.hostname.toLowerCase();
+    if (host && host !== window.location.hostname.toLowerCase()) {
+      return host.slice(0, 120);
+    }
+  } catch (_ignored) {}
+  return "출처 확인 불가";
+}
+const LEAD_TRAFFIC_SOURCE = getLeadTrafficSource();
+
 
     const ALLOW_AMOUNTS = [
       "50만원 ~ 100만원",
@@ -937,6 +960,7 @@
         String(Date.now() - PAGE_LOADED_AT)
       );
       formData.append("hp", websiteField);
+       formData.append("trafficSource", LEAD_TRAFFIC_SOURCE);
 
       try{
         const response = await fetch(WORKER_URL, {
